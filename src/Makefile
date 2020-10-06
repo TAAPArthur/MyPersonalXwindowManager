@@ -97,7 +97,7 @@ mpxmanager-autocomplete.sh: mpxmanager-autocomplete.sh.template mpxmanager.c com
 	sed -i "s/startOptions=.*/startOptions=\"$$(echo $$(./mpxmanager --list-start-options 2>&1 | sed 's/[,}{]//g' | awk '{print tolower($$0)}'| sed -E 's/((\w|-)+\W)/--\1/g'))\"/g"  mpxmanager-autocomplete.sh
 	sed -i "s/sendOptions=.*/sendOptions=\"$$(echo $$(./mpxmanager --list-options 2>&1 | sed 's/[,}{]//g' ))\"/g"  mpxmanager-autocomplete.sh
 
-mpxmanager: $(BASE_SRCS:.c=.o)
+mpxmanager: $(BASE_SRCS:.c=.o) Tests/test-config.o
 	${CC} ${CFLAGS} $^ -o $@ ${LDFLAGS}
 
 

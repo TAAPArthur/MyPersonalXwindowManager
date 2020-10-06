@@ -12,6 +12,25 @@
 
 
 SCUTEST_SET_ENV(onDefaultStartup, cleanupXServer);
+
+SCUTEST(test_focus_window_visible_after_window_destroy) {
+    WindowID win = mapWindow(createNormalWindow());
+    WindowID winNextFocused = mapWindow(createNormalWindow());
+    WindowID win2 = mapWindow(createNormalWindow());
+    WindowID winFocused = mapWindow(createNormalWindow());
+    runEventLoop();
+    focusWindow(win);
+    focusWindow(win2);
+    focusWindow(winNextFocused);
+    focusWindow(winFocused);
+    runEventLoop();
+    assertEquals(getActiveMasterWindowStack()->size, 4);
+    assertEquals(getFocusedWindow()->id, winFocused);
+    assert(checkStackingOrder((WindowID[]) {win, winNextFocused, win2, winFocused}, 4));
+    destroyWindow(winFocused);
+    runEventLoop();
+    assert(checkStackingOrder((WindowID[]) {win, win2, winNextFocused}, 3));
+}
 SCUTEST(test_tile_before_map) {
     WindowID win = mapWindow(createNormalWindow());
     registerWindow(win, root, NULL);
@@ -122,6 +141,45 @@ SCUTEST(test_dock_not_auto_in_workspace) {
     runEventLoop();
     assert(!getWorkspaceOfWindow(getWindowInfo(win)));
 }
+
+
+void replayKeyboardEvent();
+static Binding customBindings[] = {
+    {0, XK_Super_L, {grabActiveKeyboard, {0}} },
+    {0, XK_Super_L, {setFocusStackFrozen, {1}} },
+    {Mod4Mask, XK_Super_L, {setFocusStackFrozen, {0}}, .flags = {.mask = XCB_INPUT_XI_EVENT_MASK_KEY_RELEASE}},
+    {Mod4Mask, XK_Super_L, {ungrabActiveKeyboard, {0}}, .flags = {.mask = XCB_INPUT_XI_EVENT_MASK_KEY_RELEASE}},
+    {Mod4Mask, XK_A, {incrementCount}},
+};
+static void customBindingsSetup() {
+    ROOT_DEVICE_EVENT_MASKS = 0;
+    addBindings(customBindings, LEN(customBindings));
+    addShutdownOnIdleRule();
+    loadSettings();
+    onStartup();
+    runEventLoop();
+}
+SCUTEST_SET_ENV(customBindingsSetup, cleanupXServer);
+SCUTEST(test_custom_bindings) {
+    sendKeyPress(getKeyCode(XK_Super_L), getActiveMasterKeyboardID());
+    sendKeyPress(getKeyCode(XK_A), getActiveMasterKeyboardID());
+    runEventLoop();
+    assert(isFocusStackFrozen());
+    assertEquals(1, getCount());
+    sendKeyRelease(getKeyCode(XK_A), getActiveMasterKeyboardID());
+    sendKeyPress(getKeyCode(XK_A), getActiveMasterKeyboardID());
+    runEventLoop();
+    assert(isFocusStackFrozen());
+    assertEquals(2, getCount());
+    sendKeyRelease(getKeyCode(XK_A), getActiveMasterKeyboardID());
+    sendKeyRelease(getKeyCode(XK_Super_L), getActiveMasterKeyboardID());
+    runEventLoop();
+    assert(!isFocusStackFrozen());
+    assertEquals(2, getCount());
+    typeKey(getKeyCode(XK_A), getActiveMasterKeyboardID());
+    runEventLoop();
+}
+
 
 
 static void bindingsSetup() {

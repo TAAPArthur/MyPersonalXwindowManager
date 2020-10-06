@@ -37,8 +37,7 @@ int ungrabDevice(MasterID id) {
 int grabDetail(MasterID deviceID, uint32_t detail, uint32_t mod, uint32_t maskValue, uint32_t ignoreMod) {
     XIEventMask eventMask = {deviceID, 2, (unsigned char*)& maskValue};
     XIGrabModifiers modifiers[4] = {{mod}, {mod | IGNORE_MASK}, {mod | ignoreMod}, {mod | IGNORE_MASK | ignoreMod} };
-    TRACE("Grabbing device:%d detail:%d mod:%d mask: %d %d",
-        deviceID, detail, mod, maskValue, getKeyboardMask(maskValue));
+    TRACE("Grabbing detail on %d detail:%d mod:%d mask: %d", deviceID, detail, mod, maskValue);
     int size = ignoreMod ? LEN(modifiers) : LEN(modifiers) / 2;
     if(!getKeyboardMask(maskValue))
         return XIGrabButton(dpy, deviceID, detail, root, 0,
@@ -62,6 +61,11 @@ void replayPointerEvent() {
     TRACE("Replaying pointer events");
     xcb_allow_events(dis, XCB_ALLOW_REPLAY_POINTER, XCB_CURRENT_TIME);
 }
+void replayKeyboardEvent() {
+    TRACE("Replaying keyboard event");
+    xcb_allow_events(dis, XCB_ALLOW_REPLAY_KEYBOARD, XCB_CURRENT_TIME);
+}
+
 int registerForWindowEvents(WindowID window, int mask) {
     xcb_void_cookie_t cookie;
     cookie = xcb_change_window_attributes_checked(dis, window, XCB_CW_EVENT_MASK, &mask);

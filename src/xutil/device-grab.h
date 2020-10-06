@@ -73,7 +73,8 @@ static inline int grabKeyboard(MasterID id) {
     return grabDevice(id, KEYBOARD_MASKS);
 }
 
-static inline int grabActiveKeyboard(void) {return grabKeyboard(getActiveMasterKeyboardID());}
+static inline void grabActiveKeyboard(void) {grabKeyboard(getActiveMasterKeyboardID());}
+static inline void ungrabActiveKeyboard(void) {ungrabDevice(getActiveMasterKeyboardID());}
 
 /**
  *

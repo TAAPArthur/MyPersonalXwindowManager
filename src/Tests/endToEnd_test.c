@@ -1,9 +1,10 @@
+#include "../Extensions/ewmh-client.h"
 #include "../communications.h"
+#include "../system.h"
 #include "../windows.h"
 #include "../wmfunctions.h"
-#include "../system.h"
-#include "test-wm-helper.h"
 #include "test-event-helper.h"
+#include "test-wm-helper.h"
 #include "tester.h"
 #include <signal.h>
 
@@ -25,7 +26,7 @@ static void cleanup() {
 }
 
 static void initSetup() {
-    wmPid = spawnChild("./mpxmanager --log-level 0");
+    wmPid = spawnChild("./mpxmanager --log-level 3");
     createXSimpleEnv();
     WAIT_UNTIL_TRUE(isMPXManagerRunning());
     waitUntilWMIdle();
@@ -130,3 +131,53 @@ SCUTEST(relative_position_after_restart) {
     assert(checkStackingOrder(relativePos3, LEN(relativePos)));
 }
 */
+
+static void extSetup() {
+    setenv("ALLOW_MPX_EXT", "1", 1);
+    initSetup();
+}
+
+static inline void triggerKeyCombo(const KeySym* keys, int num) {
+    for(int i = 0; i < num; i++) {
+        sendKeyPress(getKeyCode(keys[i]), getActiveMasterKeyboardID());
+        flush();
+    }
+    flush();
+    for(int i = num - 1; i >= 0; i--) {
+        sendKeyRelease(getKeyCode(keys[i]), getActiveMasterKeyboardID());
+        flush();
+    }
+}
+SCUTEST_SET_ENV(extSetup, cleanup);
+SCUTEST(hide_only_window, .iter = 4, .timeout = 4) {
+    Window win = mapWindow(createNormalWindow());
+    waitUntilWMIdle();
+    assert(isWindowMapped(win));
+    if(_i > 1) {
+        WindowID w = createWindow(root, XCB_WINDOW_CLASS_INPUT_OUTPUT, 0, NULL, (Rect) {0, 0, 1, 1});
+        xcb_icccm_wm_hints_t hints = {.input = 0};
+        catchError(xcb_icccm_set_wm_hints_checked(dis, w, &hints));
+        waitUntilWMIdle();
+        mapWindow(w);
+        if(_i == 2)
+            win = mapWindow(createNormalWindow());
+        waitUntilWMIdle();
+    }
+    focusWindow(win);
+    if(!_i) {
+        sendChangeWindowStateRequest(win, XCB_EWMH_WM_STATE_ADD, ewmh->_NET_WM_STATE_HIDDEN, 0);
+    }
+    else {
+        triggerKeyCombo((KeySym[]) {XK_Super_L, XK_y}, 2);
+    }
+    waitUntilWMIdle();
+    assert(!isWindowMapped(win));
+    if(_i) {
+        sendChangeWindowStateRequest(win, XCB_EWMH_WM_STATE_REMOVE, ewmh->_NET_WM_STATE_HIDDEN, 0);
+    }
+    else {
+        triggerKeyCombo((KeySym[]) {XK_Super_L, XK_Shift_L, XK_y}, 3);
+    }
+    waitUntilWMIdle();
+    assert(isWindowMapped(win));
+}

@@ -163,7 +163,7 @@ int getKeyCode(int keysym);
  *
  * @return 1 if buttonOrKey is a valid button value
  */
-static inline bool isButton(int buttonOrKey) {return buttonOrKey < 8;}
+static inline bool isButton(int buttonOrKey) {return buttonOrKey && buttonOrKey < 8;}
 /**
  * Checks to see if buttonOrKey is a button or not.
  * If it is, return buttonOrKey
