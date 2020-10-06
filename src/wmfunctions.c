@@ -151,8 +151,10 @@ void updateFocusForAllMasters(WindowInfo* winInfo) {
             DEBUG("Trying to update focus from %d for Master %d", (winInfo ? winInfo->id : 0), master->id);
             if(!focusNextVisibleWindow(master, winInfo))
                 DEBUG("Could not find window to update focus for master %d", master->id);
-            else
+            else {
                 DEBUG("Updated focus for master %d", master->id);
+                raiseWindowInfo(getFocusedWindowOfMaster(master), 0);
+            }
         }
     }
 }
