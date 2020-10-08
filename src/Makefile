@@ -168,5 +168,5 @@ doc-check:
 clean-test:
 	find . \( -name "*.out" \) -exec rm -f {} \;
 clean:
-	rm -f unitTest vgcore* *gc?? mpxmanager libmpxmanager*.a libmpxmanager*.so mpxmanager-autocomplete.sh mpxmanager.sh
+	rm -f unitTest vgcore* *gc?? mpxmanager *.a *.so mpxmanager-autocomplete.sh mpxmanager.sh
 	find . \( -name "*.orig" -o -name "*.gc??" -o -name "*.out" -o -name "*.o" \) -exec rm -f {} \;
