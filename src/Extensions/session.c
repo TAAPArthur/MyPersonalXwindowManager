@@ -320,7 +320,7 @@ void saveCustomState(void) {
     setWindowProperty(root, MPX_WM_MASTER_WINDOWS, XCB_ATOM_CARDINAL, masterWindows, numMasterWindows);
     setWindowProperty(root, MPX_WM_MASTER_WORKSPACES, XCB_ATOM_CARDINAL, masterWorkspaces, LEN(masterWorkspaces));
     setWindowProperty(root, MPX_WM_WORKSPACE_LAYOUT_INDEXES, XCB_ATOM_CARDINAL, layoutOffsets, LEN(layoutOffsets));
-    setWindowProperty(root, MPX_WM_WORKSPACE_LAYOUT_NAMES, ewmh->UTF8_STRING, getBuffer(&joiner), joiner.usedBufferSize);
+    setWindowPropertyStrings(root, MPX_WM_WORKSPACE_LAYOUT_NAMES, ewmh->UTF8_STRING, &joiner);
     setWindowProperty(root, MPX_WM_WORKSPACE_ORDER, XCB_ATOM_CARDINAL, workspaceWindows, numWorkspaceWindows);
     FOR_EACH(WindowInfo*, winInfo, getAllWindows()) {
         if((winInfo->mask ^ winInfo->savedMask) & (~EXTERNAL_MASKS)) {

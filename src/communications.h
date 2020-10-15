@@ -20,6 +20,7 @@ enum OptionFlags {
     VAR_SETTER = 1 << 4,
     REQUEST_INT = 1 << 5,
     REQUEST_STR = 1 << 6,
+    REQUEST_MULTI = 1 << 7,
 };
 
 /**
@@ -30,14 +31,13 @@ enum OptionFlags {
 typedef struct {
     /// option name
     const char* name;
-    void(*func)();
-    int arg;
+    BindingFunc bindingFunc;
     /// bitmask of OptionFlags
     int flags;
 } Option ;
-bool matchesOption(Option* o, const char* str, bool empty);
+bool matchesOption(Option* o, const char* str, char empty);
 
-void callOption(const Option* o, const char* p);
+void callOption(const Option* o, const char* p, const char* p2);
 
 /// Adds a startup mode
 void addStartupMode(const char* name, void(*func)());
@@ -50,7 +50,7 @@ void addStartupMode(const char* name, void(*func)());
  *
  * @return the first option matching name or NULL
  */
-const Option* findOption(const char* name, const char* value) ;
+const Option* findOption(const char* name, const char* value1, const char* value2);
 /**
  * Sets up the system to receive messages from an external client
  */
@@ -69,7 +69,7 @@ void receiveClientMessage(xcb_client_message_event_t* event);
  * @param active
  */
 void send(const char* name, const char* value);
-void sendAs(const char* name, const char* value, WindowID active);
+void sendAs(const char* name, WindowID active, const char* value, const char* value2);
 
 
 /**

@@ -44,14 +44,14 @@ static void replaceWM() {STEAL_WM_SELECTION = 1;}
 static void dumpStartupOptions();
 /// list of startup options
 static Option options[] = {
-    {"list-start-options", dumpStartupOptions},
-    {"log-level", setLogLevel, .flags = VAR_SETTER | REQUEST_INT},
-    {"list-options", dumpOptions},
-    {"no-event-loop", noEventLoop},
-    {"no-run-as-window-manager", clearWMSettings},
-    {"replace", replaceWM},
-    {"die-on-idle", addShutdownOnIdleRule},
-    {"as", setWindow, .flags = REQUEST_INT},
+    {"list-start-options", {dumpStartupOptions}},
+    {"log-level", {setLogLevel}, .flags = VAR_SETTER | REQUEST_INT},
+    {"list-options", {dumpOptions}},
+    {"no-event-loop", {noEventLoop}},
+    {"no-run-as-window-manager", {clearWMSettings}},
+    {"replace", {replaceWM}},
+    {"die-on-idle", {addShutdownOnIdleRule}},
+    {"as", {setWindow}, .flags = REQUEST_INT},
 };
 static void dumpStartupOptions() {
     for(int i = 0; i < LEN(options); i++)
@@ -80,8 +80,8 @@ static inline bool callStartupOption(const char* const* argv, int* n) {
             else
                 value = "";
             INFO("value '%s' %d %d", value, value[0], option->flags);
-            if(matchesOption(option, option->name, !value[0])) {
-                callOption(option, value);
+            if(matchesOption(option, option->name, !!value[0])) {
+                callOption(option, value, NULL);
                 if(increment)
                     *n += 1;
                 return 1;
@@ -108,8 +108,7 @@ static void parseArgs(int argc, const char* const* argv) {
             continue;
         }
         DEBUG("Trying to send %s.", argv[i]);
-        const char* value = (argv[i + 1] ? argv[i + 1] : "");
-        if(!findOption(argv[i], value)) {
+        if(!findOption(argv[i], argv[i + 1], argv[i + 1] ? argv[i + 2] : NULL)) {
             ERROR("Could not find matching options for %s.", argv[i]);
             exit(INVALID_OPTION);
         }
@@ -121,7 +120,7 @@ static void parseArgs(int argc, const char* const* argv) {
         if(!isMPXManagerRunning())
             exit(WM_NOT_RESPONDING);
         noEventLoop();
-        sendAs(argv[i], value, active);
+        sendAs(argv[i], active, argv[i + 1], argv[i + 1] ? argv[i + 2] : NULL);
         break;
     }
 }

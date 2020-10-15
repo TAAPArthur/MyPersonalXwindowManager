@@ -4,7 +4,7 @@
 #include "../wmfunctions.h"
 
 static void checkAndSend(const char* name, const char* value) {
-    assert(findOption(name, value));
+    assert(findOption(name, value, NULL));
     send(name, value);
     flush();
 }
@@ -28,6 +28,10 @@ SCUTEST(test_send_receive_func) {
     assert(!hasOutStandingMessages());
 }
 
+SCUTEST(test_send_multi_func) {
+    sendAs("raise-or-run", 0, "NotFound", "exit 0");
+}
+
 SCUTEST(test_send_receive_as, .iter = 2) {
     addShutdownOnIdleRule();
     WindowID win = mapWindow(createNormalWindow());
@@ -41,10 +45,10 @@ SCUTEST(test_send_receive_as, .iter = 2) {
             registerWindow(id, root, NULL);
             setClientPointerForWindow(id, master->id);
             flush();
-            sendAs("focus-win", buffer, id);
+            sendAs("focus-win", id, buffer, NULL);
         }
         else {
-            sendAs("focus-win", buffer, master->id);
+            sendAs("focus-win", master->id, buffer, NULL);
         }
         flush();
         runEventLoop();

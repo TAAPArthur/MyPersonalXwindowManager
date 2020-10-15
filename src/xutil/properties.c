@@ -71,6 +71,28 @@ char* getWindowPropertyString(WindowID win, xcb_atom_t atom, xcb_atom_t type, ch
     return result;
 }
 
+bool getWindowPropertyStrings(WindowID win, xcb_atom_t atom, xcb_atom_t type, char** str, int N) {
+    xcb_get_property_reply_t* reply = getWindowProperty(win, atom, type);
+    if(reply) {
+        uint32_t len = xcb_get_property_value_length(reply);
+        char* strings = (char*) xcb_get_property_value(reply);
+        int offset = 0;
+        int i = 0;
+        while(offset < len) {
+            const char* element = strings + offset;
+            int len = strlen(element);
+            if(str) {
+                strncpy(str[i++], element, MAX_NAME_LEN);
+                if(i == N)
+                    break;
+            }
+            offset += len + 1;
+        }
+        free(reply);
+    }
+    return reply ? 1 : 0;
+}
+
 
 int getButtonDetailOrKeyCode(int buttonOrKey) {
     return isButton(buttonOrKey) ? buttonOrKey : getKeyCode(buttonOrKey);

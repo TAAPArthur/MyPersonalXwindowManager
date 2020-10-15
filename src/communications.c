@@ -39,49 +39,56 @@ static int isInt(const char* str, bool* isNumeric) {
     return num;
 }
 
-bool matchesOption(Option* o, const char* str, bool empty) {
+bool matchesOption(Option* o, const char* str, char numOptions) {
     if(strcasecmp(o->name, str) == 0) {
-        INFO("%s %d %d %d", str, o->flags, empty, (o->flags & (REQUEST_STR | REQUEST_INT) ? 1 : 0) ^ empty);
-        INFO("%d %d", o->flags & (REQUEST_STR | REQUEST_INT) ? 1 : 0,  empty);
-        return (o->flags & (REQUEST_STR | REQUEST_INT) ? 1 : 0) ^ empty;
+        if(o->flags & REQUEST_MULTI)
+            return numOptions == 2;
+        else if(o->flags & (REQUEST_STR | REQUEST_INT))
+            return numOptions == 1;
+        else
+            return numOptions == 0;
     }
     return 0;
 }
-void callOption(const Option* o, const char* p) {
+void callOption(const Option* o, const char* p, const char* p2) {
     TRACE("Calling %s %s", o->name, p);
     uint32_t i = isInt(p, NULL);
+    const BindingFunc* bindingFunc = &o->bindingFunc;
     if(o->flags & REQUEST_INT) {
-        o->func(i, o->arg);
+        o->bindingFunc.func(i, bindingFunc->arg);
     }
     else if(o->flags & REQUEST_STR) {
-        o->func(p, o->arg);
+        o->bindingFunc.func(p, p2 ? p2 : bindingFunc->arg.str);
     }
     else {
-        o->func(o->arg);
+        o->bindingFunc.func(bindingFunc->arg, bindingFunc->arg2);
     }
 }
 
 static Option baseOptions[] = {
-    {"dump", dumpWindowFilter, MAPPABLE_MASK, .flags = FORK_ON_RECEIVE},
-    {"dump", dumpWindowByClass, .flags = FORK_ON_RECEIVE | REQUEST_STR},
-    {"dump-master", dumpMaster, 0, .flags = FORK_ON_RECEIVE},
-    {"dump-rules", dumpRules,  .flags = FORK_ON_RECEIVE},
-    {"dump-win", dumpWindow,  .flags = FORK_ON_RECEIVE | REQUEST_INT},
-    //{"find", [](const char * * str) {return findAndRaise(*str, MATCHES_CLASS, ACTION_NONE);}},
-    //{"find-and-raise", [](const char * * str) {return findAndRaise(*str, MATCHES_CLASS, ACTION_ACTIVATE);}},
-    {"focus-win", (void(*)())focusWindow, .flags = REQUEST_INT},
-    {"log-level", setLogLevel, .flags = VAR_SETTER | REQUEST_INT},
-    {"lower", lowerWindow, .flags = REQUEST_INT},
-    {"next-layout", cycleLayouts, UP},
-    {"next-win", shiftFocus, UP},
-    {"next-win-of-class", shiftFocusToNextClass, UP},
-    {"prev-layout", cycleLayouts, DOWN},
-    {"prev-win", shiftFocus, DOWN},
-    {"prev-win-of-class", shiftFocusToNextClass, DOWN},
-    {"raise", raiseWindow, .flags = REQUEST_INT},
-    {"restart", restart, .flags = CONFIRM_EARLY},
-    {"sum", printSummary, .flags = FORK_ON_RECEIVE},
-    {"switch-workspace", switchToWorkspace},
+    {"dump", {dumpWindowByClass}, .flags = FORK_ON_RECEIVE | REQUEST_STR},
+    {"dump", {dumpWindowFilter, .arg.i = MAPPABLE_MASK}, .flags = FORK_ON_RECEIVE},
+    {"dump-master", {dumpMaster, .arg.i = 0}, .flags = FORK_ON_RECEIVE},
+    {"dump-rules", {dumpRules},  .flags = FORK_ON_RECEIVE},
+    {"dump-win", {dumpWindow},  .flags = FORK_ON_RECEIVE | REQUEST_INT},
+    {"focus-win", {(void(*)())focusWindow}, .flags = REQUEST_INT},
+    {"log-level", {setLogLevel}, .flags = VAR_SETTER | REQUEST_INT},
+    {"lower", {lowerWindow}, .flags = REQUEST_INT},
+    {"next-layout", {cycleLayouts}, UP},
+    {"next-win", {shiftFocus}, UP},
+    {"next-win-of-class", {shiftFocusToNextClass}, UP},
+    {"prev-layout", {cycleLayouts}, DOWN},
+    {"prev-win", {shiftFocus}, DOWN},
+    {"prev-win-of-class", {shiftFocusToNextClass}, DOWN},
+    {"raise", {raiseWindow}, .flags = REQUEST_INT},
+    {"raise-or-run", {raiseOrRun2},  .flags = REQUEST_STR | REQUEST_MULTI | UNSAFE},
+    {"raise-or-run", {raiseOrRun},  .flags = REQUEST_STR | UNSAFE},
+    {"raise-or-run-role", {raiseOrRunRole},  .flags = REQUEST_STR | REQUEST_MULTI | UNSAFE},
+    {"raise-or-run-title", {raiseOrRunTitle},  .flags = REQUEST_STR | REQUEST_MULTI | UNSAFE},
+    {"restart", {restart}, .flags = CONFIRM_EARLY},
+    {"spawn", {spawn},  .flags = REQUEST_STR | UNSAFE},
+    {"sum", {printSummary}, .flags = FORK_ON_RECEIVE},
+    {"switch-workspace", {switchToWorkspace}},
 };
 static ArrayList options;
 
@@ -122,21 +129,30 @@ static void sendConfirmation(WindowID target, int exitCode) {
     flush();
 }
 void send(const char* name, const char* value) {
-    sendAs(name, value, 0);
+    sendAs(name, 0, value, 0);
 }
-void sendAs(const char* name, const char* value, WindowID active) {
-    unsigned int data[5] = {getAtom(name), getAtom(value), active};
-    DEBUG("sending %d (%s) %d (%s) active: %d", data[0], name, data[1], value, active);
+
+void sendAs(const char* name, WindowID active, const char* value, const char* value2) {
+    DEBUG("sending %s %s %s active: %d", name, value, value2, active);
+    setWindowPropertyString(getPrivateWindow(), OPTION_NAME, ewmh->UTF8_STRING, name);
+    StringJoiner joiner = {0};
+    if(value)
+        addString(&joiner, value);
+    if(value2)
+        addString(&joiner, value2);
+    setWindowPropertyStrings(getPrivateWindow(), OPTION_VALUES, ewmh->UTF8_STRING, &joiner);
+    freeBuffer(&joiner);
+    unsigned int data[5] = {active};
     catchError(xcb_ewmh_send_client_message(dis, getPrivateWindow(), root, MPX_WM_INTERPROCESS_COM, sizeof(data), data));
     outstandingSendCount++;
 }
-const Option* findOption(const char* name, const char* value) {
-    bool empty = !value[0];
+const Option* findOption(const char* name, const char* value1, const char* value2) {
+    char numArgs = (value2 && value2[0]) + (value1 && value1[0]);
     FOR_EACH(Option*, option, getOptions()) {
-        if(matchesOption(option, name, empty))
+        if(matchesOption(option, name, numArgs))
             return option;
     }
-    WARN("could not find option matching '%s' '%s' Empty %d", name, value, empty);
+    WARN("could not find option matching '%s' '%s' '%s' numArgs %d", name, value1, value2, numArgs);
     return NULL;
 }
 
@@ -144,18 +160,16 @@ void receiveClientMessage(xcb_client_message_event_t* event) {
     xcb_client_message_data_t data = event->data;
     WindowID win = event->window;
     xcb_atom_t message = event->type;
-    xcb_atom_t optionAtom = data.data32[0];
-    xcb_atom_t valueAtom = data.data32[1];
-    WindowID active = data.data32[2];
-    if(message == MPX_WM_INTERPROCESS_COM && optionAtom) {
-        LOG_RUN(LOG_LEVEL_DEBUG, dumpAtoms(data.data32, 2));
+    WindowID active = data.data32[0];
+    char name[MAX_NAME_LEN];
+    char value[MAX_NAME_LEN] = "", value2[MAX_NAME_LEN] = "";
+    char* values[2] = {value, value2};
+    getWindowPropertyString(win, OPTION_NAME, ewmh->UTF8_STRING, name);
+    getWindowPropertyStrings(win, OPTION_VALUES, ewmh->UTF8_STRING, values, LEN(values));
+    if(message == MPX_WM_INTERPROCESS_COM && name[0]) {
+        DEBUG("Received option %s values %s %s", name, values[0], values[1]);
         pid_t callerPID = getWindowPropertyValueInt(win, ewmh->_NET_WM_PID, XCB_ATOM_CARDINAL);
-        char name[MAX_NAME_LEN];
-        char value[MAX_NAME_LEN] = "";
-        getAtomName(optionAtom, name);
-        if(valueAtom)
-            getAtomName(valueAtom, value);
-        const Option* option = findOption(name, value);
+        const Option* option = findOption(name, values[0], values[1]);
         if(active) {
             WindowInfo* winInfo = getWindowInfo(active);
             if(winInfo) {
@@ -198,7 +212,7 @@ void receiveClientMessage(xcb_client_message_event_t* event) {
                 else
                     close(fd);
             }
-            callOption(option, value);
+            callOption(option, values[0], values[1]);
             if((option->flags & FORK_ON_RECEIVE)) {
                 fflush(NULL);
                 if(dup2(stdout, STDOUT_FILENO) == -1) {
@@ -213,7 +227,7 @@ void receiveClientMessage(xcb_client_message_event_t* event) {
             if(option)
                 INFO("option '%s' is unsafe and unsafe options are not allowed", name);
             else
-                WARN("could not find option matching '%s' '%s'", name, value);
+                WARN("could not find option matching '%s' '%s' '%s'", name, values[0], values[1]);
             sendConfirmation(win, INVALID_OPTION);
         }
     }

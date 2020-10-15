@@ -26,7 +26,7 @@ static void cleanup() {
 }
 
 static void initSetup() {
-    wmPid = spawnChild("./mpxmanager --log-level 3");
+    wmPid = spawnChild("./mpxmanager --log-level 2");
     createXSimpleEnv();
     WAIT_UNTIL_TRUE(isMPXManagerRunning());
     waitUntilWMIdle();
@@ -91,6 +91,16 @@ SCUTEST(test_send_as) {
     spawnAndWait(buffer);
     assertEquals(getActiveFocusOfMaster(getMasterByName("test")->id), root);
     assert(getActiveFocusOfMaster(getMasterByName("test2")->id) != root);
+}
+
+SCUTEST(test_send_multi_func) {
+    INFO("\n\n\n\n\n\n\n\n\n");
+    WindowID win = getWMPrivateWindow();
+    setWindowPropertyInt(win, WM_WINDOW_ROLE, XCB_ATOM_CARDINAL, 1);
+    INFO("\n\n\n\n\n\n\n\n\n");
+    sendAs("raise-or-run", 0, "NotFound", "./mpxmanager restart");
+    WAIT_UNTIL_TRUE(!getWindowPropertyValueInt(win, WM_WINDOW_ROLE, XCB_ATOM_CARDINAL));
+    WAIT_UNTIL_TRUE(isMPXManagerRunning());
 }
 
 SCUTEST(no_expose_on_restart) {

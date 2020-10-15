@@ -11,6 +11,7 @@
 #include <xcb/xcb_ewmh.h>
 #include <string.h>
 #include "../mywm-structs.h"
+#include "../util/string-array.h"
 #include "../window-masks.h"
 #include "../util/rect.h"
 #include "../globals.h"
@@ -90,6 +91,9 @@ extern xcb_atom_t WM_STATE;
 
 /// Some windows have a applications specified role, (like browser) stored in this atom
 extern xcb_atom_t WM_WINDOW_ROLE;
+
+extern xcb_atom_t OPTION_NAME;
+extern xcb_atom_t OPTION_VALUES;
 
 /**XDisplay instance (only used for events/device commands)*/
 extern Display* dpy;
@@ -317,6 +321,7 @@ int getWindowPropertyValueInt(WindowID win, xcb_atom_t atom, xcb_atom_t type);
  * @return the value of the window property
  */
 char* getWindowPropertyString(WindowID win, xcb_atom_t atom, xcb_atom_t type, char* result);
+bool getWindowPropertyStrings(WindowID win, xcb_atom_t atom, xcb_atom_t type, char** str, int N);
 
 /// When NDEBUG is set XCALL will call the checked version of X and check for errors
 #ifndef NDEBUG
@@ -353,6 +358,10 @@ static inline void setWindowPropertyInt(WindowID win, xcb_atom_t atom, xcb_atom_
 
 static inline void setWindowPropertyString(WindowID win, xcb_atom_t atom, xcb_atom_t type, const char* value) {
     setWindowProperty(win, atom, type, value, strlen(value) + 1);
+}
+
+static inline void setWindowPropertyStrings(WindowID win, xcb_atom_t atom, xcb_atom_t type, StringJoiner* joiner) {
+    setWindowProperty(win, atom, type, getBuffer(joiner), joiner->usedBufferSize);
 }
 /// @}
 
