@@ -85,10 +85,6 @@ typedef struct BindingEvent {
     uint32_t mask;
     /// keyRepeat if the event was a key repeat
     bool keyRepeat;
-    /// only bindings with matching mode can be triggered
-    unsigned int mode;
-    /// the master who triggered this binding; should not be null
-    Master* master;
     /// the window the binding was triggered on
     WindowInfo* winInfo;
 } BindingEvent;

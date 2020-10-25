@@ -116,7 +116,6 @@ void onDeviceEvent(xcb_input_key_press_event_t* event) {
     winInfo = getWindowInfo(list[i]);
     BindingEvent bindingEvent = {(Modifier)event->mods.effective, (Detail)event->detail, 1U << event->event_type,
                      (bool)((event->flags & XCB_INPUT_KEY_EVENT_FLAGS_KEY_REPEAT) ? 1 : 0),
-                     .mode = getActiveMaster()->mode,
                      .winInfo = winInfo
                  };
     applyEventRules(DEVICE_EVENT, &bindingEvent);

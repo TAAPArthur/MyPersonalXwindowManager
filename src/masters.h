@@ -86,10 +86,7 @@ typedef struct Master {
     /// Index of active workspace;
     WorkspaceID activeWorkspaceIndex;
     ArrayList bindings;
-    uint32_t mode;
 } Master;
-
-
 
 static inline const ArrayList* getSlaves(Master* master) {
     return &master->slaves;

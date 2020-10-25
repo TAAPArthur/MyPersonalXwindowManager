@@ -34,7 +34,7 @@ Detail getDetail(Binding* binding) {
 static inline bool matchesFlags(const BindingFlags* flags, const BindingEvent* event) {
     return ((flags->mask & event->mask) == event->mask) &&
         (!flags->noKeyRepeat || !event->keyRepeat) &&
-        (flags->mode == ANY_MODE || event->mode == ANY_MODE || event->mode == flags->mode);
+        (flags->mode == ANY_MODE || getActiveMode() == ANY_MODE || getActiveMode() == flags->mode);
 }
 bool matches(Binding* binding, const BindingEvent* event) {
     if(matchesFlags(&binding->flags, event))
@@ -92,8 +92,7 @@ void enterChain(Binding* binding, ArrayList* masterBindings) {
 }
 bool checkBindings(const BindingEvent* event) {
     ArrayList* masterBindings = globalMasterChainBindings.size ? &globalMasterChainBindings : &
-        (event->master ? event->master :
-            getActiveMaster())->bindings;
+        getActiveMaster()->bindings;
     int numBindings = masterBindings->size ? ((Binding*)peek(masterBindings))->chainMembers.size :
         globalBindings.size;
     TRACE("checking %d bindings", numBindings);

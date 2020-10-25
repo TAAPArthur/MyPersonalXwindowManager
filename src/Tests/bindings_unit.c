@@ -17,8 +17,12 @@ SCUTEST_ITER(test_grab_ungrab_bindings, 2) {
     assertEquals(0, grabBinding(&sampleBinding, 1));
 }
 
+#define OTHER_MODE 1
 static Binding sampleBindings[] = {
     {0, 1, {incrementCount}},
+    {0, 3, {fail} },
+    {0, 3, {incrementCount}, .flags.mode = OTHER_MODE},
+    {0, 3, {incrementCount}, .flags.mode = ANY_MODE},
     {0, 1, {incrementCount}},
     {
         0, 2, {incrementCount}, .chainMembers = CHAIN_MEM(
@@ -44,11 +48,21 @@ SCUTEST_ITER(test_addBindings, 2) {
     for(int i = 0; i < LEN(sampleBindings); i++)
         assert(sampleBindings[i].detail);
 }
+
 SCUTEST(test_check_bindings) {
     BindingEvent event = {0, 1};
     checkBindings(&event);
     assertEquals(2, getCount());
 }
+
+SCUTEST(test_check_bindings_mode) {
+    setActiveMode(OTHER_MODE);
+    dumpMaster(getActiveMaster());
+    BindingEvent event = {0, 3};
+    checkBindings(&event);
+    assertEquals(2, getCount());
+}
+
 SCUTEST(test_check_bindings_short_cricuit) {
     BindingEvent event = {0, 1};
     sampleBindings[0].flags.shortCircuit = 1;
