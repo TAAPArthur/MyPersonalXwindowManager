@@ -6,9 +6,9 @@ SPEED_TEST_FLAGS := -Wno-unused-function -Wno-unused-parameter -Wno-unused-varia
 
 IGNORED_FLAGS := -Wno-parentheses -Wno-missing-field-initializers -Wno-sign-compare
 ERROR_FLAGS := -Wall -Werror
-CFLAGS := ${ERROR_FLAGS} ${IGNORED_FLAGS} ${INJECT}
+CFLAGS := -std=c99 ${ERROR_FLAGS} ${IGNORED_FLAGS} ${INJECT}
 
-TESTFLAGS := ${CFLAGS} ${DEBUGGING_FLAGS} --coverage -lm -lscutest
+TESTFLAGS := ${CFLAGS} ${DEBUGGING_FLAGS} --coverage -lm -lscutest -D_DEFAULT_SOURCE
 LDFLAGS :=  -lX11 -lXi -lxcb -lxcb-xinput -lxcb-xtest -lxcb-ewmh -lxcb-icccm -lxcb-randr -lX11-xcb -lXtst -lxdo
 
 LAYER0_SRCS :=  globals.c util/rect.h util/string-array.c util/logger.c util/debug.c settings.c

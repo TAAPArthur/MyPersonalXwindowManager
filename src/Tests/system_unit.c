@@ -96,8 +96,8 @@ SCUTEST(test_spawn_pipe_output_only) {
 SCUTEST_ITER(spawn_pipe_death, 4) {
     int pid = spawnPipeChild(NULL, (ChildRedirection)_i);
     if(!pid) {
-        while(true)
-            msleep(100);
+        pause();
+        exit(1);
     }
     kill(pid, SIGKILL);
     assertEquals(waitForChild(pid), 9);

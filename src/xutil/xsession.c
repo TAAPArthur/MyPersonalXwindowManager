@@ -126,12 +126,7 @@ static int handleXLibError(Display* dpy __attribute__((unused)), XErrorEvent* e)
 void openXDisplay(void) {
     //XInitThreads();
     DEBUG(" connecting to XServer ");
-    for(int i = 0; i < 20; i++) {
-        dpy = XOpenDisplay(NULL);
-        if(dpy)
-            break;
-        msleep(5);
-    }
+    dpy = XOpenDisplay(NULL);
     if(!dpy) {
         ERROR(" Failed to connect to xserver");
         exit(X_ERROR);

@@ -39,7 +39,8 @@ SCUTEST_ITER(lists, LEN(autoCompleteHelpers)) {
     assertEquals(0, MAIN(autoCompleteHelpers[_i]));
 }
 SCUTEST_ERR(wm_no_response, WM_NOT_RESPONDING) {
-    assert(MAIN("log-level", "0"));
+    MAIN("log-level", "0");
+    fail();
 }
 static WindowID win;
 static void setup() {

@@ -47,7 +47,6 @@ static inline void waitToReceiveInput(int mask, int detailMask) {
         mask &= ~(1 << e->event_type);
         detailMask &= ~(1 << e->detail);
         free(e);
-        msleep(10);
     }
 }
 

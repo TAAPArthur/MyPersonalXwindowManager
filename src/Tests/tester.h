@@ -7,7 +7,6 @@
 #include "../globals.h"
 #include "../boundfunction.h"
 
-#define WAIT_UNTIL_TRUE(COND,EXPR...) do{msleep(10);EXPR;}while(!(COND))
 
 #define getArraySize(A) (A)->size
 

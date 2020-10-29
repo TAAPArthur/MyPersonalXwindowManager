@@ -1,5 +1,5 @@
 #include "../globals.h"
-#include "../device-grab.h"
+#include "../xutil/device-grab.h"
 #include "../xutil/test-functions.h"
 #include "../system.h"
 #include "../user-events.h"
@@ -24,7 +24,6 @@ SCUTEST(open_xdisplay) {
     assert(screen);
     assert(root);
     assert(WM_DELETE_WINDOW);
-    assert(WM_TAKE_FOCUS);
     assert(!xcb_connection_has_error(dis));
     assert(!consumeEvents());
 }

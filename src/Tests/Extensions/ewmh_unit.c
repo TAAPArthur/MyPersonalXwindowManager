@@ -352,7 +352,6 @@ SCUTEST_ITER(test_client_change_num_desktop, 2) {
 
 SCUTEST(test_client_set_sticky_window) {
     mapArbitraryWindow();
-    WAIT_UNTIL_TRUE(getAllWindows()->size);
     WindowInfo* winInfo = getHead(getAllWindows());
     sendChangeWindowWorkspaceRequest(winInfo->id, -1);
     flush();

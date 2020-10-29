@@ -25,6 +25,17 @@ static inline long getWMIdleCount() {
     return getWindowPropertyValueInt(getWMPrivateWindow(), MPX_IDLE_PROPERTY, XCB_ATOM_CARDINAL);
 }
 
+#define WAIT_UNTIL_TRUE(COND,EXPR...) do{msleep(10);EXPR;}while(!(COND))
+/**
+ * Sleep of mil milliseconds
+ * @param ms number of milliseconds to sleep
+ */
+static inline void msleep(int ms) {
+    struct timespec ts;
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (ms % 1000) * 1000000;
+    while(nanosleep(&ts, &ts));
+}
 static inline void waitUntilWMIdle() {
     static int idleCount;
     flush();

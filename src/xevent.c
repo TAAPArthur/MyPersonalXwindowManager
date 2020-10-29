@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <string.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <unistd.h>
 
 #include <xcb/xcb.h>
@@ -12,7 +12,6 @@
 #include "monitors.h"
 #include "user-events.h"
 #include "util/logger.h"
-#include "util/time.h"
 #include "xevent.h"
 #include "xutil/xsession.h"
 
