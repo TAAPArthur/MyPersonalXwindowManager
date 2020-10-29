@@ -121,6 +121,7 @@ extern uint32_t NON_ROOT_EVENT_MASKS;
  * no event how much further we have to wait for TRUE_IDLE
  */
 extern uint32_t IDLE_TIMEOUT;
+extern uint32_t IDLE_TIMEOUT_CLI_SEC;
 /**Mask of all events we listen for on relating to Master devices
  * and the root window.
  */

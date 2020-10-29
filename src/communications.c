@@ -87,6 +87,7 @@ static Option baseOptions[] = {
     {"raise-or-run-title", {raiseOrRunTitle},  .flags = REQUEST_STR | REQUEST_MULTI | UNSAFE},
     {"restart", {restart}, .flags = CONFIRM_EARLY},
     {"spawn", {spawn},  .flags = REQUEST_STR | UNSAFE},
+    {"quit", {requestShutdown},  .flags = UNSAFE},
     {"sum", {printSummary}, .flags = FORK_ON_RECEIVE},
     {"switch-workspace", {switchToWorkspace}},
 };

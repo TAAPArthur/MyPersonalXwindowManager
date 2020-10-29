@@ -1,18 +1,19 @@
 #include <assert.h>
-#include <getopt.h>
-#include <string.h>
 #include <err.h>
-
+#include <getopt.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "communications.h"
-#include "wm-rules.h"
 #include "globals.h"
-#include "util/logger.h"
 #include "settings.h"
 #include "system.h"
-#include "util/time.h"
-#include "xevent.h"
+#include "util/logger.h"
+#include "wm-rules.h"
 #include "wmfunctions.h"
+#include "xevent.h"
+#include "xutil/device-grab.h"
 #include "xutil/xsession.h"
 
 #ifdef DOXYGEN
@@ -124,6 +125,18 @@ static void parseArgs(int argc, const char* const* argv) {
         break;
     }
 }
+void shutdownWhenNoOutsandingMessages() {
+    if(!hasOutStandingMessages())
+        requestShutdown();
+}
+
+void timeoutWaitingForRequests() {
+    alarm(IDLE_TIMEOUT_CLI_SEC);
+    if(hasOutStandingMessages()) {
+        err(WM_NOT_RESPONDING, "WM did not confirm request(s)");
+    }
+}
+
 int _main(int argc, const char* const* argv) {
     set_handlers();
     DEBUG("MPXManager started with %d args", argc);
@@ -141,15 +154,11 @@ int _main(int argc, const char* const* argv) {
     else if(getNumberOfMessageSent()) {
         if(hasOutStandingMessages()) {
             TRACE("waiting for send receipts");
-            bool wasMPXManagerRunning = isMPXManagerRunning();
-            if(!wasMPXManagerRunning)
-                for(int i = 0; i < 10 && hasOutStandingMessages(); i++)
-                    msleep(100);
-            while(isMPXManagerRunning() && hasOutStandingMessages())
-                msleep(100);
-            if(hasOutStandingMessages()) {
-                err(WM_NOT_RESPONDING, "WM did not confirm request(s)");
-            }
+            registerForWindowEvents(getPrivateWindow(), XCB_EVENT_MASK_PROPERTY_CHANGE);
+            addEvent(XCB_PROPERTY_NOTIFY, DEFAULT_EVENT(shutdownWhenNoOutsandingMessages));
+            alarm(IDLE_TIMEOUT_CLI_SEC);
+            createSigAction(SIGALRM, timeoutWaitingForRequests);
+            runEventLoop();
             DEBUG("WM Running: %d; Outstanding messages: %d", isMPXManagerRunning(), hasOutStandingMessages());
         }
         //if(hasXConnectionBeenOpened()) return !getLastMessageExitCode();

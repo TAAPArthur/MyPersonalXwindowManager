@@ -70,3 +70,7 @@ SCUTEST_SET_ENV(setup, cleanupXServer);
 SCUTEST(test_replace) {
     assertEquals(0, MAIN("--no-event-loop", "--replace"));
 }
+
+SCUTEST(test_run_cmd) {
+    assertEquals(0, MAIN("quit"));
+}
