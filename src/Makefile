@@ -148,7 +148,7 @@ unitTestExtensions.out: unitTestExtensions
 	$(if $(TEST_FUNC),exit 1)
 
 
-code_coverage.out: unitTest
+code_coverage.out: unitTest.out
 	gcov -mr *
 	grep "#####:" *c.gcov > $@
 	grep "#####:" *c.gcov |wc -l
